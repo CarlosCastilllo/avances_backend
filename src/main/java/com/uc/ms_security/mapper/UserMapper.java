@@ -61,7 +61,7 @@ public class UserMapper {
 
         return new UserSessionsResponseDTO(
             user.getId(),
-            user.getName(),
+            user.getName(),            //pididendo el join a la db
             user.getEmail(),
             sessions
         );
