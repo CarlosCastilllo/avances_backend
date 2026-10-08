@@ -10,7 +10,7 @@ import lombok.Setter;
 public abstract class BaseRoleDTO {
 
   @NotBlank(message = "El nombre del rol es obligatorio")
-  @Size(max = 100, message = "El nombre no puede superar 100 caracteres")
+  @Size(max = 50, message = "El nombre no puede superar 50 caracteres")
   private String name;
 
   @NotBlank(message = "La descripción es obligatoria")
