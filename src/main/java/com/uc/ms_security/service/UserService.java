@@ -11,96 +11,104 @@ import com.uc.ms_security.exception.ApplicationException;
 import com.uc.ms_security.exception.ErrorCase;
 import com.uc.ms_security.mapper.UserMapper;
 import com.uc.ms_security.repository.UserRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
-    private final UserRepository userRepository;
-    private final UserMapper userMapper;
+  private final UserRepository userRepository;
+  private final UserMapper userMapper;
 
-    public UserResponseDTO create(CreateUserDTO dto) {
-        if (userRepository.existsByEmail(dto.getEmail())) {
-            throw new ApplicationException(
-                    ErrorCase.ALREADY_EXISTS,
-                    "Ya existe un usuario con este email"
-            );
-        }
-
-        User user = userMapper.toEntity(dto);
-        User savedUser = userRepository.save(user);
-        return userMapper.toResponseDTO(savedUser);
+  public UserResponseDTO create(CreateUserDTO dto) {
+    if (userRepository.existsByEmail(dto.getEmail())) {
+      throw new ApplicationException(
+        ErrorCase.ALREADY_EXISTS,
+        "Ya existe un usuario con este email"
+      );
     }
 
-    public List<UserResponseDTO> findAll() {
-        return userMapper.toResponseDTOList(userRepository.findAll());
+    User user = userMapper.toEntity(dto);
+    User savedUser = userRepository.save(user);
+    return userMapper.toResponseDTO(savedUser);
+  }
+
+  public List<UserResponseDTO> findAll() {
+    return userMapper.toResponseDTOList(userRepository.findAll());
+  }
+
+  public UserResponseDTO findById(Long id) {
+    return userMapper.toResponseDTO(findUser(id));
+  }
+
+  public UserResponseDTO update(Long id, UpdateUserDTO dto) {
+    User user = findUser(id);
+
+    if (userRepository.existsByEmailAndIdNot(dto.getEmail(), id)) {
+      throw new ApplicationException(
+        ErrorCase.ALREADY_EXISTS,
+        "El email pertenece a otro usuario"
+      );
     }
 
-    public UserResponseDTO findById(Long id) {
-        return userMapper.toResponseDTO(findUser(id));
-    }
+    userMapper.updateEntity(dto, user);
+    User updatedUser = userRepository.save(user);
+    return userMapper.toResponseDTO(updatedUser);
+  }
 
-    public UserResponseDTO update(Long id, UpdateUserDTO dto) {
-        User user = findUser(id);
+  public void delete(Long id) {
+    userRepository.delete(findUser(id));
+  }
 
-        if (userRepository.existsByEmailAndIdNot(dto.getEmail(), id)) {
-            throw new ApplicationException(
-                    ErrorCase.ALREADY_EXISTS,
-                    "El email pertenece a otro usuario"
-            );
-        }
+  public UserDetailResponseDTO findByIdAndProfile(Long id) {
+    User user = userRepository
+      .findWithProfileById(id)
+      .orElseThrow(() ->
+        new ApplicationException(
+          ErrorCase.NOT_FOUND,
+          "Usuario no encontrado con id: " + id
+        )
+      );
 
-        userMapper.updateEntity(dto, user);
-        User updatedUser = userRepository.save(user);
-        return userMapper.toResponseDTO(updatedUser);
-    }
+    return userMapper.toDetailResponseDTO(user);
+  }
 
-    public void delete(Long id) {
-        userRepository.delete(findUser(id));
-    }
+  public UserSessionsResponseDTO findByIdAndSessions(Long id) {
+    User user = userRepository
+      .findWithSessionsById(id)
+      .orElseThrow(() ->
+        new ApplicationException(
+          ErrorCase.NOT_FOUND,
+          "Usuario no encontrado con id: " + id
+        )
+      );
 
-    public UserDetailResponseDTO findByIdAndProfile(Long id) {
-        User user = userRepository
-                .findWithProfileById(id)
-                .orElseThrow(() -> new ApplicationException(
-                        ErrorCase.NOT_FOUND,
-                        "Usuario no encontrado con id: " + id
-                ));
+    return userMapper.toSessionsResponseDTO(user);
+  }
 
-        return userMapper.toDetailResponseDTO(user);
-    }
+  public UserRolesResponseDTO findByIdAndRoles(Long id) {
+    User user = userRepository
+      .findWithRolesById(id)
+      .orElseThrow(() ->
+        new ApplicationException(
+          ErrorCase.NOT_FOUND,
+          "Usuario no encontrado con id: " + id
+        )
+      );
 
-    public UserSessionsResponseDTO findByIdAndSessions(Long id) {
-        User user = userRepository
-                .findWithSessionsById(id)
-                .orElseThrow(() -> new ApplicationException(
-                        ErrorCase.NOT_FOUND,
-                        "Usuario no encontrado con id: " + id
-                ));
+    return userMapper.toRolesResponseDTO(user);
+  }
 
-        return userMapper.toSessionsResponseDTO(user);
-    }
-
-    public UserRolesResponseDTO findByIdAndRoles(Long id) {
-        User user = userRepository
-                .findWithRolesById(id)
-                .orElseThrow(() -> new ApplicationException(
-                        ErrorCase.NOT_FOUND,
-                        "Usuario no encontrado con id: " + id
-                ));
-
-        return userMapper.toRolesResponseDTO(user);
-    }
-
-    private User findUser(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new ApplicationException(
-                        ErrorCase.NOT_FOUND,
-                        "Usuario no encontrado con id: " + id
-                ));
-    }
+  private User findUser(Long id) {
+    return userRepository
+      .findById(id)
+      .orElseThrow(() ->
+        new ApplicationException(
+          ErrorCase.NOT_FOUND,
+          "Usuario no encontrado con id: " + id
+        )
+      );
+  }
 }
